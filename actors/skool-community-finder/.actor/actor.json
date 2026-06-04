@@ -8,6 +8,7 @@
   "readme": "../README.md",
   "input": "./INPUT_SCHEMA.json",
   "changelog": "../CHANGELOG.md",
+  "output": "./output_schema.json",
   "defaultMemoryMbytes": 512,
   "minMemoryMbytes": 256,
   "maxMemoryMbytes": 1024,

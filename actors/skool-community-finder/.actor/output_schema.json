@@ -1,0 +1,13 @@
+{
+  "actorOutputSchemaVersion": 1,
+  "title": "Skool Communities",
+  "description": "List of Skool communities matching the search keywords. Each item contains slug, name, member count, activity ratio, pricing, access type and computed fields.",
+  "properties": {
+    "communities": {
+      "title": "Communities dataset",
+      "description": "All discovered communities with member count, activity ratio, pricing and access type.",
+      "type": "string",
+      "template": "{{links.apiDefaultDatasetUrl}}/items"
+    }
+  }
+}
