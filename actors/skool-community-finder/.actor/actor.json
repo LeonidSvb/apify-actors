@@ -2,6 +2,7 @@
   "actorSpecification": 1,
   "name": "skool-community-finder",
   "title": "Skool Community Finder",
+  "description": "Discover Skool communities by keyword via DuckDuckGo search. Returns name, member count, activity ratio, pricing and access type for each community. No login or cookies required.",
   "version": "0.1",
   "buildTag": "latest",
   "readme": "../README.md",

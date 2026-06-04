@@ -2,6 +2,7 @@
   "actorSpecification": 1,
   "name": "{{ACTOR_SLUG}}",
   "title": "{{ACTOR_TITLE}}",
+  "description": "{{ACTOR_DESCRIPTION_MAX_300_CHARS}}",
   "version": "0.1",
   "buildTag": "latest",
   "readme": "../README.md",
