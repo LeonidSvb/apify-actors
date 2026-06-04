@@ -1,0 +1,57 @@
+{
+  "title": "Skool Community Finder Input",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+
+    "keywords": {
+      "title": "Keywords",
+      "type": "array",
+      "description": "Search terms to find Skool communities. Each keyword runs a separate DuckDuckGo search. Example: [\"cold email\", \"online course\", \"agency growth\"]",
+      "editor": "stringList",
+      "prefill": ["online community"],
+      "minItems": 1
+    },
+
+    "limit": {
+      "title": "Max results",
+      "type": "integer",
+      "description": "Maximum number of communities to return. Lower values cost less. Each result is charged separately.",
+      "default": 50,
+      "minimum": 1,
+      "maximum": 200,
+      "unit": "communities"
+    },
+
+    "minMembers": {
+      "title": "Minimum member count",
+      "type": "integer",
+      "description": "Skip communities with fewer members than this. Set to 0 to return all communities regardless of size.",
+      "default": 0,
+      "minimum": 0,
+      "unit": "members"
+    },
+
+    "requestTimeout": {
+      "title": "Request timeout",
+      "type": "integer",
+      "description": "Seconds to wait for each page to load. Increase if you see timeout errors.",
+      "default": 30,
+      "minimum": 10,
+      "maximum": 120,
+      "unit": "seconds",
+      "sectionCaption": "Advanced"
+    },
+
+    "proxyConfiguration": {
+      "title": "Proxy configuration",
+      "type": "object",
+      "description": "Skool uses AWS WAF which blocks datacenter IPs. Residential proxies are required for reliable results.",
+      "editor": "proxy",
+      "prefill": { "useApifyProxy": true, "apifyProxyGroups": ["RESIDENTIAL"] },
+      "sectionCaption": "Advanced"
+    }
+
+  },
+  "required": ["keywords"]
+}

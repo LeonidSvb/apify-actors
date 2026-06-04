@@ -1,0 +1,233 @@
+APIFY ACTORS — ПЛАН РАЗРАБОТКИ
+================================
+Обновлено: 2026-06-04
+Проект: C:\Users\79818\Desktop\apify-actors\
+Исходник: C:\Users\79818\Desktop\tests\SCRAPING-LEADGEN\skool-scrape-signals\
+
+ПОРЯДОК: Actor 1 → Actor 2 → Actor 3 → Actor 4
+
+
+================================================================
+ИССЛЕДОВАНИЕ ПЕРЕД СТАРТОМ (сделать один раз)
+================================================================
+
+ИЗУЧИТЬ ТОП АКТОРЫ ДЛЯ UX ПАТТЕРНОВ
+  [ ] Открыть memo23/skool-posts-with-comments-scraper — изучить README структуру
+  [ ] Открыть apify/instagram-scraper — посмотреть INPUT_SCHEMA (один из лучших)
+  [ ] Открыть compass/google-maps-scraper (438k runs) — стандарт UX для Store
+  [ ] Записать: какие фичи есть у топов которых нет у остальных
+  [ ] Записать: как устроен их README (секции, длина, примеры)
+  [ ] Записать: какие input параметры стандартные (proxy, maxItems, etc.)
+
+SMALL CODE / BIG UX — ФИЧИ КОТОРЫЕ СТОИТ ДОБАВИТЬ
+  [ ] Proxy support (Apify ProxyConfiguration) — 5 строк, сильно повышает надёжность
+  [ ] log.info() с прогрессом каждые N записей — пользователь видит что актор работает
+  [ ] Actor.set_status_message() — показывает текст в Console во время рана
+  [ ] Input validation с понятными сообщениями (не "KeyError", а "communityUrls is required")
+  [ ] "Try with sample" — дефолтный input который работает без настройки
+  [ ] maxItems глобальный лимит — пользователь контролирует расходы
+  [ ] requestTimeout параметр — для медленных соединений
+  [ ] Dataset preview — первые 5 записей видны сразу в Console
+
+СТАНДАРТ README (разработать на Actor 1, дублировать для 2-4)
+  [ ] Шапка: одна строка что делает актор
+  [ ] Badges: stars, runs, version
+  [ ] Quick Start: копипаст инпут который сразу работает
+  [ ] Секция "What you get": пример output JSON с пояснениями к полям
+  [ ] Секция "Input parameters": таблица всех параметров (название | тип | дефолт | описание)
+  [ ] Секция "How it works": 3-4 строки технически как скрейпит
+  [ ] Секция "Limitations": честно что не умеет (закрытые комьюнити, rate limits)
+  [ ] Секция "Use cases": 3-5 конкретных сценария
+  [ ] Секция "FAQ": 3-5 частых вопросов
+  [ ] Секция "Related actors": ссылки на свои другие акторы (cross-promotion)
+
+AI-FIRST DESIGN CHECKLIST (для всех акторов)
+  [ ] Flat JSON — не глубже 2 уровней вложенности в основных полях
+  [ ] Все поля всегда в output (null вместо отсутствия ключа)
+  [ ] Computed fields рядом с raw (days_ago + created_at, activity_ratio + total_posts/members)
+  [ ] _meta блок: { actor, version, scraped_at, total_found, run_id }
+  [ ] Structured errors: { error, message, retry: bool }
+  [ ] limit параметр обязателен — агент контролирует размер output
+  [ ] Детерминированный порядок (один и тот же sort всегда)
+  [ ] Actor.fail() при 0 результатах — агент получает ошибку, не пустой датасет
+
+
+================================================================
+ACTOR 1: Skool Community Finder
+================================================================
+Папка: actors/skool-community-finder/
+Исходник: scripts/search_communities.py
+Статус: [ ] не начат
+
+SETUP
+  [ ] apify create skool-community-finder (Python)
+  [ ] Перенести логику из search_communities.py
+  [ ] Написать INPUT_SCHEMA.json
+  [ ] Написать README.md по стандарту выше
+  [ ] Настроить PPE в actor.json: Start $0.005 + $0.003/community
+  [ ] apify push + тест на чистом аккаунте
+
+РАЗРАБОТКА
+  [ ] Порт DDG поиска (ddg_search_slugs)
+  [ ] Порт probe_community (fetch + parse __NEXT_DATA__)
+  [ ] Порт suggestedCommunities harvest
+  [ ] Убрать ICP segmentation полностью
+  [ ] Убрать keyword scoring полностью
+  [ ] Computed fields: activity_ratio, days_since_last_post
+  [ ] _meta блок в output
+  [ ] Null-safe output (все поля всегда присутствуют)
+  [ ] Input validation с понятными ошибками
+  [ ] Structured errors (rate_limited, no_results, ddg_blocked)
+  [ ] Actor.set_status_message("Searching DDG... found 12 slugs")
+  [ ] log.info() прогресс каждые 10 проборов
+  [ ] Actor.fail() если 0 результатов
+  [ ] Dedup: один slug = одна запись в output
+  [ ] Параметр limit (default 50, max 200)
+  [ ] Параметр minMembers (default 0)
+  [ ] Дефолтный input который работает без изменений (keywords = "online community")
+
+ПУБЛИКАЦИЯ
+  [ ] seoTitle: "Skool Community Finder - Search & Discover Groups by Keywords"
+  [ ] seoDescription до 160 символов
+  [ ] Категории: Lead Generation, Social Media
+  [ ] README по стандарту (Quick Start + Output JSON + Parameters table + Use cases)
+  [ ] Секция Related Actors (добавить после публикации остальных)
+  [ ] Publish to Store
+  [ ] Проверить "Click Run with defaults" на чистом аккаунте
+
+
+================================================================
+ACTOR 2: Skool Lookalike Community Finder
+================================================================
+Папка: actors/skool-lookalike-finder/
+Исходник: scripts/search_communities.py (строки 487-521)
+Статус: [ ] не начат
+
+SETUP
+  [ ] apify create skool-lookalike-finder (Python)
+  [ ] Написать INPUT_SCHEMA.json
+  [ ] Написать README.md по стандарту
+  [ ] PPE: Start $0.005 + $0.005/community found
+  [ ] apify push + тест
+
+РАЗРАБОТКА
+  [ ] Scrape top N posters из source communities
+  [ ] Вызов api2.skool.com/users/{uid}/groups для каждого постера
+  [ ] Подсчёт overlap_count и overlap_pct
+  [ ] Probe каждого кандидата (probe_community)
+  [ ] Сортировка по overlap_pct DESC
+  [ ] Исключить source communities из результата
+  [ ] Computed: overlap_pct, shared_posters список
+  [ ] Rate limiting (0.35s между запросами к users API)
+  [ ] Actor.set_status_message("Analyzing 30 top posters...")
+  [ ] _meta блок, null-safe, structured errors
+  [ ] Actor.fail() если source community недоступна
+  [ ] Параметр topPostersN (default 30)
+  [ ] Параметр limit (default 50)
+  [ ] Параметр minOverlapPct (default 0)
+
+ПУБЛИКАЦИЯ
+  [ ] seoTitle: "Skool Lookalike Community Finder - Find Similar Groups"
+  [ ] README: объяснить lookalike логику простыми словами
+  [ ] Секция Related Actors → Actor 1, 3, 4
+  [ ] Publish to Store
+
+
+================================================================
+ACTOR 3: Skool Posts & Contacts Scraper
+================================================================
+Папка: actors/skool-posts-scraper/
+Исходник: pipeline/scraper.py
+Статус: [ ] не начат
+
+SETUP
+  [ ] apify create skool-posts-scraper (Python)
+  [ ] Написать INPUT_SCHEMA.json
+  [ ] Написать README.md по стандарту
+  [ ] PPE: Start $0.005 + $0.003/post
+  [ ] apify push + тест
+
+РАЗРАБОТКА
+  [ ] Порт fetch_page (paginated __NEXT_DATA__ scraping)
+  [ ] Порт parse_post (все поля включая author contacts)
+  [ ] Порт fetch_comments + nested replies
+  [ ] Dedup через KV Store (named: "skool-posts-dedup-{slug}")
+  [ ] Параметр hoursBack (default 24)
+  [ ] Параметр maxPostsPerCommunity (default 100)
+  [ ] Параметр includeComments (default false)
+  [ ] Параметр minCommentsForFetch (default 1)
+  [ ] Multi-community support (массив URL)
+  [ ] Computed field: days_ago для каждого поста
+  [ ] Null-safe author (linkedin/website/bio = null если нет)
+  [ ] Actor.set_status_message("Scraped 45/100 posts from community-name...")
+  [ ] Actor.charge() настроить PPE
+  [ ] _meta блок, structured errors
+
+ПУБЛИКАЦИЯ
+  [ ] seoTitle: "Skool Posts Scraper - Posts, Comments & Author LinkedIn Contacts"
+  [ ] README: dedup как ключевая фича ("never pay twice for the same post")
+  [ ] Секция Related Actors → Actor 1, 2, 4
+  [ ] Publish to Store
+
+
+================================================================
+ACTOR 4: Skool Community Profiler
+================================================================
+Папка: actors/skool-community-profiler/
+Исходник: scripts/explore_communities.py
+Статус: [ ] не начат
+
+SETUP
+  [ ] apify create skool-community-profiler (Python)
+  [ ] Написать INPUT_SCHEMA.json
+  [ ] Написать README.md по стандарту
+  [ ] PPE: Start $0.005 + $0.005/community profiled
+  [ ] apify push + тест
+
+РАЗРАБОТКА
+  [ ] Порт scrape_n_posts (category discovery + paginated)
+  [ ] Порт build_profile (без LLM classify части)
+  [ ] top_posters с pct и likely_admin флагом (>= 8%)
+  [ ] categories breakdown (count per category)
+  [ ] Computed: posts_per_day, scan_period_days, activity_ratio
+  [ ] Параметр postsToScan (default 100, max 500)
+  [ ] Multi-community support
+  [ ] Actor.set_status_message("Profiling community-name... 67/100 posts")
+  [ ] Null-safe все поля
+  [ ] _meta блок, structured errors
+
+ПУБЛИКАЦИЯ
+  [ ] seoTitle: "Skool Community Profiler - Activity Stats, Top Members & Admins"
+  [ ] README: likely_admins как killer feature
+  [ ] Секция Related Actors → Actor 1, 2, 3
+  [ ] Publish to Store
+
+
+================================================================
+ОБЩИЕ ЗАДАЧИ
+================================================================
+
+ПЕРЕД ПЕРВЫМ ДЕПЛОЕМ
+  [ ] Зарегистрировать Creator Plan ($1/мес) — $500 кредитов на 6 мес
+  [ ] npm install -g apify-cli
+  [ ] apify login --token YOUR_TOKEN
+  [ ] Создать папку actors/ в этом репо
+
+ШАБЛОН (разработать на Actor 1, копировать для 2-4)
+  [ ] actor.json шаблон
+  [ ] INPUT_SCHEMA.json шаблон (общие поля: limit, requestTimeout)
+  [ ] README.md шаблон (секции, структура)
+  [ ] Dockerfile шаблон
+  [ ] Стандартный _meta блок (одна функция, переиспользуется)
+  [ ] Стандартный error handler (одна функция)
+  [ ] GitHub Actions workflow шаблон для auto-deploy
+
+ПОСЛЕ КАЖДОЙ ПУБЛИКАЦИИ
+  [ ] "Click Run with defaults" на чистом аккаунте — должно работать
+  [ ] Actor.fail() проверить при пустом input
+  [ ] Добавить Секцию Related Actors в README всех существующих акторов
+
+МОНИТОРИНГ
+  [ ] Health check: 0 результатов → Actor.fail() (сохраняет позицию в Store)
+  [ ] Следить за __NEXT_DATA__ структурой Skool (может поменяться в любой момент)
+  [ ] GitHub Actions: пуш в main → auto-deploy на Apify

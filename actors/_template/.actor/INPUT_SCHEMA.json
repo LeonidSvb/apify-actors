@@ -1,0 +1,48 @@
+{
+  "title": "{{ACTOR_TITLE}} Input",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+
+    "startUrls": {
+      "title": "Community URLs",
+      "type": "array",
+      "description": "List of Skool community URLs to process. Example: https://www.skool.com/community-name",
+      "editor": "requestListSources",
+      "prefill": [{ "url": "https://www.skool.com/{{SAMPLE_COMMUNITY}}" }],
+      "minItems": 1
+    },
+
+    "limit": {
+      "title": "Max results",
+      "type": "integer",
+      "description": "Maximum number of results to return. Lower values cost less.",
+      "default": 50,
+      "minimum": 1,
+      "maximum": 500,
+      "unit": "results"
+    },
+
+    "requestTimeout": {
+      "title": "Request timeout",
+      "type": "integer",
+      "description": "How long to wait for each page to load, in seconds.",
+      "default": 30,
+      "minimum": 5,
+      "maximum": 120,
+      "unit": "seconds",
+      "sectionCaption": "Advanced"
+    },
+
+    "proxyConfiguration": {
+      "title": "Proxy configuration",
+      "type": "object",
+      "description": "Skool requires residential proxies. Datacenter proxies will be blocked by AWS WAF.",
+      "editor": "proxy",
+      "prefill": { "useApifyProxy": true, "apifyProxyGroups": ["RESIDENTIAL"] },
+      "sectionCaption": "Advanced"
+    }
+
+  },
+  "required": ["startUrls"]
+}

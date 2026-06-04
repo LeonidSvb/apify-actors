@@ -1,0 +1,14 @@
+{
+  "actorSpecification": 1,
+  "name": "{{ACTOR_SLUG}}",
+  "title": "{{ACTOR_TITLE}}",
+  "version": "0.1",
+  "buildTag": "latest",
+  "readme": "./README.md",
+  "input": "./.actor/INPUT_SCHEMA.json",
+  "changelog": "./CHANGELOG.md",
+  "defaultMemoryMbytes": 512,
+  "minMemoryMbytes": 256,
+  "maxMemoryMbytes": 2048,
+  "environmentVariables": {}
+}
