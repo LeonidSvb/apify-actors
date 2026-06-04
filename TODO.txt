@@ -57,40 +57,55 @@ ACTOR 1: Skool Community Finder
 ================================================================
 Папка: actors/skool-community-finder/
 Исходник: scripts/search_communities.py
-Статус: [ ] не начат
+Статус: [x] разработка завершена, задеплоен на Apify (leadstack/skool-community-finder)
 
 SETUP
-  [ ] apify create skool-community-finder (Python)
-  [ ] Перенести логику из search_communities.py
-  [ ] Написать INPUT_SCHEMA.json
-  [ ] Написать README.md по стандарту выше
-  [ ] Настроить PPE в actor.json: Start $0.005 + $0.003/community
-  [ ] apify push + тест на чистом аккаунте
+  [x] apify create skool-community-finder (Python)
+  [x] Перенести логику из search_communities.py
+  [x] Написать INPUT_SCHEMA.json
+  [x] Написать README.md по стандарту выше
+  [ ] Настроить PPE в Console: Start $0.005 + $0.003/community
+  [x] apify push — задеплоен
 
 РАЗРАБОТКА
-  [ ] Порт DDG поиска (ddg_search_slugs)
-  [ ] Порт probe_community (fetch + parse __NEXT_DATA__)
-  [ ] Порт suggestedCommunities harvest
-  [ ] Убрать ICP segmentation полностью
-  [ ] Убрать keyword scoring полностью
-  [ ] Computed fields: activity_ratio, days_since_last_post
-  [ ] _meta блок в output
-  [ ] Null-safe output (все поля всегда присутствуют)
-  [ ] Input validation с понятными ошибками
-  [ ] Structured errors (rate_limited, no_results, ddg_blocked)
-  [ ] Actor.set_status_message("Searching DDG... found 12 slugs")
-  [ ] log.info() прогресс каждые 10 проборов
-  [ ] Actor.fail() если 0 результатов
-  [ ] Dedup: один slug = одна запись в output
-  [ ] Параметр limit (default 50, max 200)
-  [ ] Параметр minMembers (default 0)
-  [ ] Дефолтный input который работает без изменений (keywords = "online community")
+  [x] Порт DDG поиска (ddg_search_slugs)
+  [x] Порт probe_community (fetch + parse __NEXT_DATA__)
+  [x] Порт suggestedCommunities harvest
+  [x] Убрать ICP segmentation полностью
+  [x] Убрать keyword scoring полностью
+  [x] Computed fields: activity_ratio, days_since_last_post
+  [x] _meta блок в output
+  [x] Null-safe output (все поля всегда присутствуют)
+  [x] Input validation с понятными ошибками
+  [x] Actor.set_status_message() прогресс
+  [x] log.info() прогресс каждые 10 проборов
+  [x] Actor.fail() если 0 результатов
+  [x] Dedup: один slug = одна запись в output
+  [x] Параметр limit (default 50, max 200)
+  [x] Параметр minMembers (default 0)
+  [x] Дефолтный input работает без изменений
 
-ПУБЛИКАЦИЯ
+ТЕСТИРОВАНИЕ (сделать перед публикацией в Store)
+  [ ] Тест 1 — базовый: keywords=["cold email"], limit=10 → убедиться что >0 результатов
+  [ ] Тест 2 — minMembers: minMembers=1000 → убедиться что все results >= 1000 members
+  [ ] Тест 3 — limit: limit=3 → убедиться что ровно 3 результата, не больше
+  [ ] Тест 4 — приватные комьюнити: проверить что access="paid"/"invite_only" возвращают name+description+member_count (частичная инфа без постов)
+  [ ] Тест 5 — suggested harvest: убедиться что source="suggested" появляется в output
+  [ ] Тест 6 — несуществующий keyword: keywords=["xyzxyzxyz123notreal"] → Actor.fail() с понятным сообщением
+  [ ] Тест 7 — пустой input: {} без keywords → валидация отдаёт понятную ошибку
+  [ ] Тест 8 — нагрузка: limit=50, 3 keywords → проверить время выполнения и полноту output
+  [ ] Тест 9 — "Run with defaults" на чистом аккаунте без изменений input
+  [ ] Тест 10 — output schema: убедиться что ВСЕ 15 полей присутствуют в каждом item (включая null)
+  [ ] Тест 11 — _meta блок: run_id, scraped_at, total_found корректны
+  [ ] Тест 12 — activity_ratio: total_posts=0 → ratio=0.0 (не NaN, не ошибка)
+  [ ] Тест 13 — DDG rate limit симуляция: много keywords подряд → проверить что streak>=3 логируется
+  [ ] Тест 14 — Apify cloud ран с residential proxy → убедиться нет WAF блоков
+
+ПУБЛИКАЦИЯ (после прохождения всех тестов)
+  [ ] Настроить PPE в Console: Start $0.005 + $0.003/community-found
   [ ] seoTitle: "Skool Community Finder - Search & Discover Groups by Keywords"
   [ ] seoDescription до 160 символов
   [ ] Категории: Lead Generation, Social Media
-  [ ] README по стандарту (Quick Start + Output JSON + Parameters table + Use cases)
   [ ] Секция Related Actors (добавить после публикации остальных)
   [ ] Publish to Store
   [ ] Проверить "Click Run with defaults" на чистом аккаунте
