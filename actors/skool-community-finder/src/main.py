@@ -32,12 +32,10 @@ DDG_DELAY_S = 3.5
 SKOOL_DELAY_S = 0.7
 
 
-async def ddg_search_slugs(keyword: str, timeout: int) -> list[str]:
-    """Search DuckDuckGo for site:skool.com + keyword, return slug list."""
-    query = f"site:skool.com {keyword}"
+async def ddg_fetch_page(query: str, page: int, timeout: int) -> str:
+    """Fetch one DDG HTML results page. page=0 is first, page=1 is next 30."""
     encoded = query.replace(" ", "+").replace(":", "%3A")
-    url = f"https://html.duckduckgo.com/html/?q={encoded}"
-
+    url = f"https://html.duckduckgo.com/html/?q={encoded}&s={page * 30}"
     try:
         async with httpx.AsyncClient(
             headers=DDG_HEADERS,
@@ -45,16 +43,51 @@ async def ddg_search_slugs(keyword: str, timeout: int) -> list[str]:
             follow_redirects=True,
         ) as client:
             resp = await client.get(url)
-            html = resp.text
+            return resp.text
     except Exception as exc:
-        Actor.log.warning(f"DDG search failed for '{keyword}': {exc}")
-        return []
+        Actor.log.warning(f"DDG fetch failed (query='{query}', page={page}): {exc}")
+        return ""
 
-    slugs = re.findall(r'skool\.com/([a-z0-9\-]{3,50})(?:[/"\\s?])', html)
+
+def extract_slugs_from_html(html: str) -> list[str]:
+    """Extract Skool community slugs from HTML. Uses lookahead to avoid truncation."""
+    # Lookahead stops at any non-slug character without consuming it
+    slugs = re.findall(r'skool\.com/([a-z0-9-]{3,60})(?=[^a-z0-9-]|$)', html)
     return [
-        s for s in dict.fromkeys(slugs)  # dedup, preserve order
-        if s not in SYSTEM_SLUGS and not s.startswith("api")
+        s.rstrip("-")  # strip trailing dash artefacts
+        for s in dict.fromkeys(slugs)
+        if s not in SYSTEM_SLUGS
+        and not s.startswith("api")
+        and len(s) >= 3
     ]
+
+
+async def ddg_search_slugs(keyword: str, timeout: int) -> list[str]:
+    """
+    Search DuckDuckGo for site:skool.com + keyword.
+    Fetches page 1 and page 2 to get more slugs.
+    Also tries quoted variant for better precision.
+    """
+    queries = [
+        f"site:skool.com {keyword}",
+        f'site:skool.com "{keyword}"',
+    ]
+    all_slugs: dict[str, None] = {}
+
+    for query in queries:
+        for page in range(2):  # page 0 and page 1
+            html = await ddg_fetch_page(query, page, timeout)
+            if not html:
+                break
+            new = extract_slugs_from_html(html)
+            for s in new:
+                all_slugs[s] = None
+            Actor.log.info(f"  DDG '{query}' p{page+1}: {len(new)} slugs")
+            if len(new) < 3:
+                break  # no point fetching next page if this one is sparse
+            await asyncio.sleep(1.5)  # small delay between pages
+
+    return list(all_slugs.keys())
 
 
 async def probe_community(
