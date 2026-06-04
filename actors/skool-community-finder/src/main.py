@@ -4,6 +4,7 @@ Discovers Skool communities by keyword using DuckDuckGo search + __NEXT_DATA__ p
 No login or cookies required — works with public communities only.
 """
 import asyncio
+import os
 import re
 
 import httpx
@@ -158,7 +159,7 @@ async def probe_community(
 
 async def main() -> None:
     async with Actor:
-        run_id = Actor.config.actor_run_id or "local"
+        run_id = os.environ.get("APIFY_ACTOR_RUN_ID") or "local"
 
         # ── 1. Input & validation ────────────────────────────────────────────
         inp = await Actor.get_input() or {}
@@ -189,9 +190,13 @@ async def main() -> None:
             return
 
         # ── 2. Proxy ─────────────────────────────────────────────────────────
-        proxy_configuration = await Actor.create_proxy_configuration(
-            actor_proxy_input=proxy_raw
-        )
+        proxy_configuration = None
+        try:
+            proxy_configuration = await Actor.create_proxy_configuration(
+                actor_proxy_input=proxy_raw
+            )
+        except Exception as exc:
+            Actor.log.warning(f"Proxy unavailable: {exc}. Running without proxy (local test mode).")
 
         # ── 3. DDG phase: collect slug candidates ────────────────────────────
         await Actor.set_status_message(
